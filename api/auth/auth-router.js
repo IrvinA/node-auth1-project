@@ -24,31 +24,13 @@ router.post(
   }
 );
 
-/**
-  2 [POST] /api/auth/login { "username": "sue", "password": "1234" }
-
-  response:
-  status 200
-  {
-    "message": "Welcome sue!"
-  }
-
-  response on invalid credentials:
-  status 401
-  {
-    "message": "Invalid credentials"
-  }
- */
-router.post('login', checkUsernameExists, async (req, res, next) => {
+router.post('/login', checkUsernameExists, async (req, res, next) => {
   try {
     const { username, password } = req.body;
     const [user] = await Users.findBy({ username });
     const checkedPassword = bcrypt.compareSync(password, user.password);
     if (!checkedPassword) {
-      return next({
-        status: 401,
-        message: 'Invalid credentials',
-      });
+      return next({ status: 401, message: 'Invalid credentials' });
     }
     req.session.user = user;
     res.status(200).json({ message: `Welcome ${user.username}!` });
@@ -56,20 +38,17 @@ router.post('login', checkUsernameExists, async (req, res, next) => {
     next(err);
   }
 });
-/**
-  3 [GET] /api/auth/logout
 
-  response for logged-in users:
-  status 200
-  {
-    "message": "logged out"
+router.get('/logout', async (req, res, next) => {
+  if (!req.session.user) {
+    return res.status(200).json({ message: 'no session' });
   }
-
-  response for not-logged-in users:
-  status 200
-  {
-    "message": "no session"
-  }
- */
+  req.session.destroy((err) => {
+    if (err) {
+      return res.json({ message: 'error logging you out' });
+    }
+    res.status(200).json({ message: 'logged out' });
+  });
+});
 
 module.exports = router;
