@@ -1,25 +1,33 @@
-/*
-  If the user does not have a session saved in the server
+const db = require('../../data/db-config');
 
-  status 401
-  {
-    "message": "You shall not pass!"
+function restricted(req, res, next) {
+  if (req.session.user) {
+    next()
+  } else {
+    next({ 
+      status: 401, 
+      message: 'you shall not pass!' 
+    })
   }
-*/
-function restricted() {
-
 }
 
-/*
-  If the username in req.body already exists in the database
+async function checkUsernameFree(req, res, next) {
+  try {
+    const existing = await db('users')
+      .where('username', req.body.username)
+      .first();
 
-  status 422
-  {
-    "message": "Username taken"
+    if (existing) {
+      next({
+        status: 422,
+        message: 'Username taken'
+      });
+    } else {
+      next();
+    }
+  } catch (err) {
+    next(err);
   }
-*/
-function checkUsernameFree() {
-
 }
 
 /*
